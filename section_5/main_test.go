@@ -2,10 +2,9 @@ package main
 
 import (
 	"testing"
-	"github.com/k0kubun/pp"
 	"math/rand"
+	"github.com/k0kubun/pp"
 )
-
 
 func shuffle(data []*Node) []*Node {
 	n := len(data)
@@ -16,7 +15,6 @@ func shuffle(data []*Node) []*Node {
 
 	return data
 }
-
 
 func TestCompute(t *testing.T) {
 	names := []string{
@@ -58,5 +56,61 @@ func TestCompute(t *testing.T) {
 	nodes[13].AddNear(nodes[14])
 
 	shuffle(nodes[1:])
-	pp.Println(topologicalSort(nodes[1:]))
+	namePrinter(topologicalSort(nodes[1:]))
+}
+
+type N struct {
+	Name   string
+	Weight int
+}
+
+func TestCompute2(t *testing.T) {
+	names := []struct {
+		Name   string
+		Weight int
+		Nears  []string
+	}{
+		{"マリネードを合わせる", 2, []string{"チキンをマリネードにつける"}},
+		{"にんにくを刻む", 4, []string{"にんにくと生姜を加える"}},
+		{"生姜を刻む", 3, []string{"にんにくと生姜を加える"}},
+		{"人参を刻む", 4, []string{"人参セロリピーナッツに火を入れる"}},
+		{"セロリを刻む", 3, []string{"人参セロリピーナッツに火を入れる"}},
+		{"ピーナッツを洗う", 2, []string{"人参セロリピーナッツに火を入れる"}},
+		{"クッキングソースを合わせる", 3, []string{"クッキングソースをかける"}},
+		{"チキンを焼く", 6, []string{"チキンをマリネードにつける"}},
+		{"チキンをマリネードにつける", 15, []string{"チキンに少し火を入れる"}},
+		{"チキンに少し火を入れる", 4, []string{"にんにくと生姜を加える"}},
+		{"にんにくと生姜を加える", 1, []string{"チキンを仕上げる"}},
+		{"チキンを仕上げる", 2, []string{"チキンを外す"}},
+		{"チキンを外す", 1, []string{"人参セロリピーナッツに火を入れる"}},
+		{"人参セロリピーナッツに火を入れる", 4, []string{"チキンを戻す"}},
+		{"チキンを戻す", 1, []string{"クッキングソースをかける"}},
+		{"クッキングソースをかける", 1, []string{"ソースが濃くなるまで火を入れる"}},
+		{"ソースが濃くなるまで火を入れる", 3, []string{"料理を火から外す"}},
+		{"料理を火から外す", 1, []string{}},
+	}
+	nodes := make([]*Node, len(names))
+
+	for i, n := range names {
+		nodes[i] = NewNodeWithWeight(n.Name, n.Weight)
+	}
+
+	for i, n := range names {
+		for _, nn := range n.Nears {
+			for _, node := range nodes {
+				if node.Name == nn {
+					nodes[i].AddNear(node)
+				}
+			}
+		}
+	}
+
+	shuffle(nodes)
+
+	re := criticalPath(nodes)
+	pp.Println(re.PathList())
+
+	if re.Weight != 39 {
+		t.Fail()
+	}
 }
