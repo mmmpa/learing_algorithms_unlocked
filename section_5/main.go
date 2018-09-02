@@ -232,11 +232,11 @@ func criticalPath(nodes []*Node) CriticalPathResult {
 type N2 struct {
 	Index int
 	Name  string
-	Edges []*Edge
+	Edges *[]Edge
 }
 
 type Edge struct {
-	To     *Node
+	To     *N2
 	Weight int
 }
 
@@ -306,10 +306,21 @@ func (o *Heap) Pick() H {
 	return re
 }
 
-func (o *Heap) Keys() []int {
+func (o *Heap) SortedKeys() []int {
 	re := make([]int, o.Pos)
+
+	for i, n := range o.SortedBody() {
+		re[i] = n.Key
+	}
+
+	return re
+}
+
+func (o *Heap) SortedBody() []H {
+	re := make([]H, o.Pos)
+
 	for i, _ := range re {
-		re[i] = o.Body[i].Key
+		re[i] = o.Pick()
 	}
 
 	return re
@@ -323,4 +334,93 @@ func heapSort(data []H) *Heap {
 	}
 
 	return heap
+}
+
+type Set struct {
+	Body []*N2
+	Map  map[string]bool
+	Size int
+}
+
+func (o *Set) Set(nodes []*N2) *Set {
+	o.Size = len(nodes)
+	o.Body = make([]*N2, o.Size)
+	copy(o.Body, nodes)
+	o.Map = map[string]bool{}
+	for _, n := range nodes {
+		o.Map[n.Name] = true
+	}
+	return o
+}
+
+func (o *Set) HasAny() bool {
+	return o.Size != 0
+}
+
+func (o *Set) Has(name string) bool {
+	return o.Map[name]
+}
+
+func (o *Set) Del(node *N2) *N2 {
+	newer := make([]*N2, o.Size-1)
+
+	i := 0
+	for _, n := range o.Body {
+		if n.Name != node.Name {
+			newer[i] = n
+			i++
+		}
+	}
+	o.Body = newer
+	o.Size--
+	o.Map[node.Name] = false
+	return node
+}
+
+func dijkstra(nodes []*N2, start int) map[string]int {
+	shortest := map[string]int{}
+	nearest := map[string]*N2{}
+	rest := (&Set{}).Set(nodes)
+	startNode := nodes[start]
+
+	for _, n := range nodes {
+		shortest[n.Name] = math.MaxInt32
+	}
+	shortest[startNode.Name] = 0
+	visited := rest.Del(startNode)
+
+	for rest.HasAny() {
+		min := math.MaxInt32
+		var next *N2
+
+		for _, edge := range *visited.Edges {
+			nextName := edge.To.Name
+
+			if !rest.Has(nextName) {
+				continue
+			}
+
+			pre := nearest[nextName]
+			nextShortest := shortest[visited.Name] + edge.Weight
+
+			if pre == nil {
+				nearest[nextName] = visited
+				shortest[nextName] = nextShortest
+			} else {
+				if nextShortest < shortest[nextName] {
+					nearest[nextName] = visited
+					shortest[nextName] = nextShortest
+				}
+			}
+
+			if shortest[nextName] < min {
+				min = shortest[nextName]
+				next = edge.To
+			}
+		}
+
+		visited = rest.Del(next)
+	}
+
+	return shortest
 }

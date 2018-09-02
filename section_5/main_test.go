@@ -16,6 +16,19 @@ func shuffle(data []*Node) []*Node {
 	return data
 }
 
+func eq(a []int, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, an := range a {
+		if an != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func TestCompute(t *testing.T) {
 	names := []string{
 		"",
@@ -126,6 +139,42 @@ func TestCompute3(t *testing.T) {
 	}
 	re := heapSort(hs)
 
-	pp.Println(re.Keys())
-	pp.Println(re.Pick())
+	if !eq(re.SortedKeys(), []int{0, 0, 1, 2, 3, 8}) {
+		t.Fail()
+	}
+}
+
+func TestCompute4(t *testing.T) {
+	nodes := map[string]*N2{
+		"s": {0, "s", nil},
+		"t": {1, "t", nil},
+		"x": {2, "x", nil},
+		"y": {3, "y", nil},
+		"z": {4, "z", nil},
+	}
+
+	nodes["s"].Edges = &[]Edge{{nodes["t"], 6}, {nodes["y"], 4}}
+	nodes["t"].Edges = &[]Edge{{nodes["x"], 3}, {nodes["y"], 2}}
+	nodes["x"].Edges = &[]Edge{{nodes["z"], 4}}
+	nodes["y"].Edges = &[]Edge{{nodes["t"], 1}, {nodes["x"], 9}, {nodes["z"], 3}}
+	nodes["z"].Edges = &[]Edge{{nodes["s"], 2}, {nodes["x"], 5}}
+
+	ns := make([]*N2, 5)
+	for _, n := range nodes {
+		ns[n.Index] = n
+	}
+
+	ex := map[string]int{
+		"s": 0,
+		"t": 5,
+		"x": 8,
+		"y": 4,
+		"z": 7,
+	}
+
+	for k, n := range dijkstra(ns, 0) {
+		if ex[k] != n {
+			t.Fail()
+		}
+	}
 }
