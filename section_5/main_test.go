@@ -114,3 +114,18 @@ func TestCompute2(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestCompute3(t *testing.T) {
+	hs := []H{
+		{0, 0},
+		{2, 0},
+		{8, 0},
+		{1, 0},
+		{3, 0},
+		{0, 0},
+	}
+	re := heapSort(hs)
+
+	pp.Println(re.Keys())
+	pp.Println(re.Pick())
+}

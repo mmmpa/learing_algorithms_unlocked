@@ -228,3 +228,99 @@ func criticalPath(nodes []*Node) CriticalPathResult {
 
 	return result
 }
+
+type N2 struct {
+	Index int
+	Name  string
+	Edges []*Edge
+}
+
+type Edge struct {
+	To     *Node
+	Weight int
+}
+
+type H struct {
+	Key   int
+	Value int
+}
+
+type Heap struct {
+	Body []H
+	Pos  int
+}
+
+func NewHeap(l int) *Heap {
+	return &Heap{
+		Body: make([]H, l),
+		Pos:  0,
+	}
+}
+
+func (o *Heap) Insert(h H) {
+	o.Body[o.Pos] = h
+
+	now := o.Pos
+
+	for now != 0 {
+		parent := (now - 1) / 2
+
+		if o.Body[parent].Key > o.Body[now].Key {
+			o.Body[now], o.Body[parent] = o.Body[parent], o.Body[now]
+		}
+		now = now / 2
+	}
+
+	o.Pos++
+}
+
+func (o *Heap) Pick() H {
+	o.Pos--
+	re := o.Body[0]
+	o.Body[0] = o.Body[o.Pos]
+
+	now := 0
+	next := 1
+
+	for next < o.Pos {
+		nowValue := o.Body[now].Key
+		leftValue := o.Body[next].Key
+		rightValue := o.Body[next+1].Key
+
+		if leftValue > rightValue {
+			next++
+		}
+
+		nextValue := o.Body[next].Key
+
+		if nowValue > nextValue {
+			o.Body[now], o.Body[next] = o.Body[next], o.Body[now]
+		} else {
+			break
+		}
+
+		now = next
+		next = now*2 + 1
+	}
+
+	return re
+}
+
+func (o *Heap) Keys() []int {
+	re := make([]int, o.Pos)
+	for i, _ := range re {
+		re[i] = o.Body[i].Key
+	}
+
+	return re
+}
+
+func heapSort(data []H) *Heap {
+	heap := NewHeap(len(data))
+
+	for _, h := range data {
+		heap.Insert(h)
+	}
+
+	return heap
+}
