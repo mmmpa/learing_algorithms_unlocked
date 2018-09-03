@@ -128,29 +128,29 @@ func TestCompute2(t *testing.T) {
 	}
 }
 
-func TestCompute3(t *testing.T) {
-	hs := []H{
-		{0, 0},
-		{2, 0},
-		{8, 0},
-		{1, 0},
-		{3, 0},
-		{0, 0},
-	}
-	re := heapSort(hs)
-
-	if !eq(re.SortedKeys(), []int{0, 0, 1, 2, 3, 8}) {
-		t.Fail()
-	}
-}
+// func TestCompute3(t *testing.T) {
+// 	hs := []H{
+// 		{0, 0},
+// 		{2, 0},
+// 		{8, 0},
+// 		{1, 0},
+// 		{3, 0},
+// 		{0, 0},
+// 	}
+// 	re := heapSort(hs)
+//
+// 	if !eq(re.SortedKeys(), []int{0, 0, 1, 2, 3, 8}) {
+// 		t.Fail()
+// 	}
+// }
 
 func TestCompute4(t *testing.T) {
 	nodes := map[string]*N2{
-		"s": {0, "s", nil},
-		"t": {1, "t", nil},
-		"x": {2, "x", nil},
-		"y": {3, "y", nil},
-		"z": {4, "z", nil},
+		"s": {0, "s", nil, 0},
+		"t": {1, "t", nil, 0},
+		"x": {2, "x", nil, 0},
+		"y": {3, "y", nil, 0},
+		"z": {4, "z", nil, 0},
 	}
 
 	nodes["s"].Edges = &[]Edge{{nodes["t"], 6}, {nodes["y"], 4}}
