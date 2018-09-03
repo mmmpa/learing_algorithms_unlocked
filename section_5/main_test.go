@@ -128,21 +128,27 @@ func TestCompute2(t *testing.T) {
 	}
 }
 
-// func TestCompute3(t *testing.T) {
-// 	hs := []H{
-// 		{0, 0},
-// 		{2, 0},
-// 		{8, 0},
-// 		{1, 0},
-// 		{3, 0},
-// 		{0, 0},
-// 	}
-// 	re := heapSort(hs)
-//
-// 	if !eq(re.SortedKeys(), []int{0, 0, 1, 2, 3, 8}) {
-// 		t.Fail()
-// 	}
-// }
+func TestCompute3(t *testing.T) {
+	hs := []*H{
+		{0, 0},
+		{2, 0},
+		{8, 0},
+		{1, 0},
+		{3, 0},
+		{0, 0},
+	}
+	re := heapSort3(hs)
+
+	if !eq(re.SortedKeys(), []int{0, 0, 1, 2, 3, 8}) {
+		t.Fail()
+	}
+	re2 := heapSort3(hs)
+	re2.Decrease(hs[2], 1)
+
+	if !eq(re2.SortedKeys(), []int{0, 0, 1, 1, 2, 3}) {
+		t.Fail()
+	}
+}
 
 func TestCompute4(t *testing.T) {
 	nodes := map[string]*N2{

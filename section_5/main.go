@@ -237,8 +237,12 @@ type N2 struct {
 	Shortest int
 }
 
-func (o N2) Key() int {
+func (o *N2) Key() int {
 	return o.Shortest
+}
+
+func (o *N2) SetKey(n int) {
+	o.Shortest = n
 }
 
 type Edge struct {
@@ -251,12 +255,17 @@ type H struct {
 	Value    int
 }
 
-func (o H) Key() int {
+func (o *H) Key() int {
 	return o.KeyValue
+}
+
+func (o *H) SetKey(n int) {
+	o.KeyValue = n
 }
 
 type HeapItem interface {
 	Key() int
+	SetKey(int)
 }
 
 type Heap struct {
@@ -286,6 +295,27 @@ func (o *Heap) Insert(h HeapItem) {
 	}
 
 	o.Pos++
+}
+
+func (o *Heap) Decrease(h HeapItem, n int) {
+
+	now := 0
+	for i, item := range o.Body {
+		if item == h {
+			now = i
+			item.SetKey(n)
+			break
+		}
+	}
+
+	for now != 0 {
+		parent := (now - 1) / 2
+
+		if o.Body[parent].Key() > o.Body[now].Key() {
+			o.Body[now], o.Body[parent] = o.Body[parent], o.Body[now]
+		}
+		now = now / 2
+	}
 }
 
 func (o *Heap) Pick() (HeapItem, error) {
@@ -354,11 +384,21 @@ func heapSort(data []HeapItem) *Heap {
 	return heap
 }
 
+func heapSort3(data []*H) *Heap {
+	re := make([]HeapItem, len(data))
+
+	for i, _ := range re {
+		re[i] = data[i]
+	}
+
+	return heapSort(re)
+}
+
 func heapSort2(data []*N2) *Heap {
 	re := make([]HeapItem, len(data))
 
 	for i, _ := range re {
-		re[i] = *data[i]
+		re[i] = data[i]
 	}
 
 	return heapSort(re)
@@ -417,10 +457,10 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 	heap := heapSort2(nodes)
 
 	h, _ := heap.Pick()
-	visited := h.(N2)
+	visited := h.(*N2)
 
 	for {
-		rest.Del(&visited)
+		rest.Del(visited)
 		heap = NewHeap(len(nodes))
 
 		for _, edge := range *visited.Edges {
@@ -435,23 +475,23 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 			nextShortest := visited.Shortest + edge.Weight
 
 			if pre == nil {
-				nearest[nextName] = &visited
+				nearest[nextName] = visited
 				nextNode.Shortest = nextShortest
 			} else {
 				if nextShortest < nextNode.Shortest {
-					nearest[nextName] = &visited
+					nearest[nextName] = visited
 					nextNode.Shortest = nextShortest
 				}
 			}
 
-			heap.Insert(*nextNode)
+			heap.Insert(nextNode)
 		}
 
 		h, err := heap.Pick()
 		if err != nil {
 			break
 		}
-		visited = h.(N2)
+		visited = h.(*N2)
 	}
 	shortest := map[string]int{}
 
