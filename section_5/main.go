@@ -313,6 +313,8 @@ func (o *Heap) Decrease(h HeapItem, n int) {
 
 		if o.Body[parent].Key() > o.Body[now].Key() {
 			o.Body[now], o.Body[parent] = o.Body[parent], o.Body[now]
+		} else {
+			break
 		}
 		now = now / 2
 	}
@@ -447,7 +449,6 @@ func (o *Set) Del(node *N2) *N2 {
 
 func dijkstra(nodes []*N2, start int) map[string]int {
 	nearest := map[string]*N2{}
-	rest := (&Set{}).Set(nodes)
 	startNode := nodes[start]
 
 	for _, n := range nodes {
@@ -456,42 +457,31 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 	startNode.Shortest = 0
 	heap := heapSort2(nodes)
 
-	h, _ := heap.Pick()
-	visited := h.(*N2)
 
 	for {
-		rest.Del(visited)
-		heap = NewHeap(len(nodes))
+		h, err := heap.Pick()
+		if err != nil {
+			break
+		}
+		visited := h.(*N2)
 
 		for _, edge := range *visited.Edges {
 			nextNode := edge.To
 			nextName := nextNode.Name
-
-			if !rest.Has(nextNode.Name) {
-				continue
-			}
 
 			pre := nearest[nextNode.Name]
 			nextShortest := visited.Shortest + edge.Weight
 
 			if pre == nil {
 				nearest[nextName] = visited
-				nextNode.Shortest = nextShortest
+				heap.Decrease(nextNode, nextShortest)
 			} else {
 				if nextShortest < nextNode.Shortest {
 					nearest[nextName] = visited
-					nextNode.Shortest = nextShortest
+					heap.Decrease(nextNode, nextShortest)
 				}
 			}
-
-			heap.Insert(nextNode)
 		}
-
-		h, err := heap.Pick()
-		if err != nil {
-			break
-		}
-		visited = h.(*N2)
 	}
 	shortest := map[string]int{}
 
