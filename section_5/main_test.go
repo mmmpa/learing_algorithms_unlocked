@@ -29,6 +29,19 @@ func eq(a []int, b []int) bool {
 	return true
 }
 
+func eq2(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i, an := range a {
+		if an != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func TestCompute(t *testing.T) {
 	names := []string{
 		"",
@@ -159,11 +172,11 @@ func TestCompute4(t *testing.T) {
 		"z": {4, "z", nil, 0},
 	}
 
-	nodes["s"].Edges = &[]Edge{{nodes["t"], 6}, {nodes["y"], 4}}
-	nodes["t"].Edges = &[]Edge{{nodes["x"], 3}, {nodes["y"], 2}}
-	nodes["x"].Edges = &[]Edge{{nodes["z"], 4}}
-	nodes["y"].Edges = &[]Edge{{nodes["t"], 1}, {nodes["x"], 9}, {nodes["z"], 3}}
-	nodes["z"].Edges = &[]Edge{{nodes["s"], 2}, {nodes["x"], 5}}
+	nodes["s"].Edges = &[]Edge{{nodes["t"], 6, nil}, {nodes["y"], 4, nil}}
+	nodes["t"].Edges = &[]Edge{{nodes["x"], 3, nil}, {nodes["y"], 2, nil}}
+	nodes["x"].Edges = &[]Edge{{nodes["z"], 4, nil}}
+	nodes["y"].Edges = &[]Edge{{nodes["t"], 1, nil}, {nodes["x"], 9, nil}, {nodes["z"], 3, nil}}
+	nodes["z"].Edges = &[]Edge{{nodes["s"], 2, nil}, {nodes["x"], 5, nil}}
 
 	ns := make([]*N2, 5)
 	for _, n := range nodes {
@@ -182,5 +195,68 @@ func TestCompute4(t *testing.T) {
 		if ex[k] != n {
 			t.Fail()
 		}
+	}
+}
+
+func TestCompute5(t *testing.T) {
+	nodes := map[string]*N2{
+		"s": {0, "s", nil, 0},
+		"t": {1, "t", nil, 0},
+		"x": {2, "x", nil, 0},
+		"y": {3, "y", nil, 0},
+		"z": {4, "z", nil, 0},
+	}
+
+	nodes["s"].Edges = &[]Edge{{nodes["t"], 6, nodes["s"]}, {nodes["y"], 7, nodes["s"]}}
+	nodes["t"].Edges = &[]Edge{{nodes["x"], 5, nodes["t"]}, {nodes["y"], 8, nodes["t"]}, {nodes["z"], -4, nodes["t"]}}
+	nodes["x"].Edges = &[]Edge{{nodes["t"], -2, nodes["x"]}}
+	nodes["y"].Edges = &[]Edge{{nodes["x"], -3, nodes["y"]}, {nodes["z"], 9, nodes["y"]}}
+	nodes["z"].Edges = &[]Edge{{nodes["s"], 2, nodes["z"]}, {nodes["x"], 7, nodes["z"]}}
+
+	ns := make([]*N2, 5)
+	for _, n := range nodes {
+		ns[n.Index] = n
+	}
+
+	ex := map[string]int{
+		"s": 0,
+		"t": 2,
+		"x": 4,
+		"y": 7,
+		"z": -2,
+	}
+
+	_, shortest := bellmanFord(ns, 0)
+
+	for k, n := range shortest {
+		if ex[k] != n {
+			t.Fail()
+		}
+	}
+}
+func TestCompute6(t *testing.T) {
+	nodes := map[string]*N2{
+		"s": {0, "s", nil, 0},
+		"t": {1, "t", nil, 0},
+		"x": {2, "x", nil, 0},
+		"y": {3, "y", nil, 0},
+		"z": {4, "z", nil, 0},
+	}
+
+	nodes["s"].Edges = &[]Edge{{nodes["t"], 6, nodes["s"]}, {nodes["y"], 7, nodes["s"]}}
+	nodes["t"].Edges = &[]Edge{{nodes["x"], 5, nodes["t"]}, {nodes["y"], 8, nodes["t"]}, {nodes["z"], -4, nodes["t"]}}
+	nodes["x"].Edges = &[]Edge{{nodes["t"], -2, nodes["x"]}}
+	nodes["y"].Edges = &[]Edge{{nodes["x"], -3, nodes["y"]}, {nodes["z"], 9, nodes["y"]}}
+	nodes["z"].Edges = &[]Edge{{nodes["s"], 2, nodes["z"]}, {nodes["x"], 5, nodes["z"]}}
+
+	ns := make([]*N2, 5)
+	for _, n := range nodes {
+		ns[n.Index] = n
+	}
+
+	nearest, shortest := bellmanFord(ns, 0)
+
+	if !eq2(findNegativeCycle(ns, nearest, shortest), []string{"z", "t", "x"}) {
+		t.Fail()
 	}
 }

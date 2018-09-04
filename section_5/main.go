@@ -248,6 +248,7 @@ func (o *N2) SetKey(n int) {
 type Edge struct {
 	To     *N2
 	Weight int
+	From   *N2
 }
 
 type H struct {
@@ -457,7 +458,6 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 	startNode.Shortest = 0
 	heap := heapSort2(nodes)
 
-
 	for {
 		h, err := heap.Pick()
 		if err != nil {
@@ -469,17 +469,11 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 			nextNode := edge.To
 			nextName := nextNode.Name
 
-			pre := nearest[nextNode.Name]
 			nextShortest := visited.Shortest + edge.Weight
 
-			if pre == nil {
+			if nextShortest < nextNode.Shortest {
 				nearest[nextName] = visited
 				heap.Decrease(nextNode, nextShortest)
-			} else {
-				if nextShortest < nextNode.Shortest {
-					nearest[nextName] = visited
-					heap.Decrease(nextNode, nextShortest)
-				}
 			}
 		}
 	}
@@ -490,4 +484,94 @@ func dijkstra(nodes []*N2, start int) map[string]int {
 	}
 
 	return shortest
+}
+
+func bellmanFord(nodes []*N2, start int) (map[string]*N2, map[string]int) {
+	nearest := map[string]*N2{}
+	shortest := map[string]int{}
+	for _, n := range nodes {
+		shortest[n.Name] = math.MaxInt32
+	}
+	startNode := nodes[start]
+	shortest[startNode.Name] = 0
+
+	for range nodes {
+		relaxes(nodes, nearest, shortest)
+	}
+
+	return nearest, shortest
+}
+
+func relaxes(nodes []*N2, nearest map[string]*N2, shortest map[string]int) {
+	for _, visited := range nodes {
+		for _, edge := range *visited.Edges {
+			nextNode := edge.To
+			nextName := nextNode.Name
+
+			nextShortest := shortest[visited.Name] + edge.Weight
+
+			if nextShortest < shortest[nextName] {
+				nearest[nextName] = visited
+				shortest[nextName] = nextShortest
+			}
+		}
+	}
+}
+
+type Cycle struct {
+	Name string
+	Next *Cycle
+	Step int
+}
+
+func findNegativeCycle(nodes []*N2, nearest map[string]*N2, shortest map[string]int) []string {
+	base := map[string]int{}
+	for k, n := range shortest {
+		base[k] = n
+	}
+	relaxes(nodes, nearest, shortest)
+
+	paths := map[string]bool{}
+
+	now := nodes[0]
+	for {
+		if paths[now.Name] {
+			break
+		}
+
+		paths[now.Name] = true
+		now = nearest[now.Name]
+	}
+
+	cycleCheck := map[string]bool{}
+	var cycle *Cycle
+	var tail *Cycle
+	for {
+		if cycleCheck[now.Name] {
+			break
+		}
+
+		cycleCheck[now.Name] = true
+
+		if cycle == nil {
+			cycle = &Cycle{Name: now.Name, Step: 1}
+			tail = cycle
+		} else {
+			cycle.Next = &Cycle{Name: now.Name, Step: cycle.Step + 1}
+			cycle = cycle.Next
+		}
+
+		now = nearest[now.Name]
+	}
+
+	steps := make([]string, cycle.Step)
+	i := 0
+	for i < cycle.Step {
+		steps[i] = tail.Name
+
+		tail = tail.Next
+		i++
+	}
+
+	return steps
 }
