@@ -575,3 +575,120 @@ func findNegativeCycle(nodes []*N2, nearest map[string]*N2, shortest map[string]
 
 	return steps
 }
+
+func floyd(nodes [][]int) [][]int {
+	count := len(nodes) + 1
+
+	shortest := make([][][]int, count)
+	pred := make([][][]*int, count)
+
+	for i, _ := range shortest {
+		shortest[i] = make([][]int, count)
+		pred[i] = make([][]*int, count)
+
+		for j, _ := range shortest {
+			shortest[i][j] = make([]int, count)
+			pred[i][j] = make([]*int, count)
+		}
+	}
+
+	for i := 1; i < count; i++ {
+		for j := 1; j < count; j++ {
+			w := nodes[i-1][j-1]
+			shortest[i][j][0] = w
+
+			if w != math.MaxInt32 && w != 0 {
+				pred[i][j][0] = ip(i)
+			}
+		}
+	}
+
+	for x := 1; x < count; x++ {
+		for i := 1; i < count; i++ {
+			for j := 1; j < count; j++ {
+				next := shortest[i][x][x-1] + shortest[x][j][x-1]
+
+				if shortest[i][j][x-1] > next {
+					shortest[i][j][x] = next
+					pred[i][j][x] = ip(x)
+				} else {
+					shortest[i][j][x] = shortest[i][j][x-1]
+					pred[i][j][x] = pred[i][j][x-1]
+				}
+			}
+		}
+	}
+
+	l := count - 1
+	shortestResult := make([][]int, l)
+	for i, _ := range shortestResult {
+		shortestResult[i] = make([]int, l)
+	}
+
+	for i := 0; i < l; i++ {
+		for j := 0; j < l; j++ {
+			shortestResult[i][j] = shortest[i+1][j+1][l]
+		}
+	}
+
+	return shortestResult
+}
+
+func ip(i int) *int {
+	return &i
+}
+
+func printShortest2(shortest [][][]int) {
+	fmt.Println("shortest")
+	for i, l := range shortest {
+		if i == 0 {
+			continue
+		}
+		fmt.Println(l)
+	}
+	fmt.Print("\n")
+}
+
+func printShortest(shortest [][][]int, x int) {
+	fmt.Println("shortest")
+	for i, l := range shortest {
+		if i == 0 {
+			continue
+		}
+		for ii, ll := range l {
+			if ii == 0 {
+				continue
+			}
+			v := ll[x]
+			if v >= math.MaxInt32 {
+				fmt.Print("- ")
+			} else {
+				fmt.Print(v, " ")
+			}
+		}
+		fmt.Print("\n")
+	}
+	fmt.Print("\n")
+}
+
+func printPred(shortest [][][]*int, x int) {
+	fmt.Println("pred")
+	for i, l := range shortest {
+		if i == 0 {
+			continue
+		}
+		for ii, ll := range l {
+			if ii == 0 {
+				continue
+			}
+			v := ll[x]
+			if v == nil {
+				fmt.Print("- ")
+			} else {
+				fmt.Print(*v, " ")
+			}
+		}
+		fmt.Print("\n")
+	}
+	fmt.Print("\n")
+}

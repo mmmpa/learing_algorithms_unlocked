@@ -4,6 +4,7 @@ import (
 	"testing"
 	"math/rand"
 	"github.com/k0kubun/pp"
+	"math"
 )
 
 func shuffle(data []*Node) []*Node {
@@ -258,5 +259,27 @@ func TestCompute6(t *testing.T) {
 
 	if !eq2(findNegativeCycle(ns, nearest, shortest), []string{"z", "t", "x"}) {
 		t.Fail()
+	}
+}
+
+func TestCompute7(t *testing.T) {
+	nodes := [][]int{
+		{0, 3, 8, math.MaxInt32},
+		{math.MaxInt32, 0, math.MaxInt32, 1},
+		{math.MaxInt32, 4, 0, math.MaxInt32},
+		{2, math.MaxInt32, -5, 0},
+	}
+
+	ex := [][]int{
+		{0, 3, -1, 4},
+		{3, 0, -4, 1},
+		{7, 4, 0, 5},
+		{2, -1, -5, 0},
+	}
+
+	for i, n := range floyd(nodes) {
+		if !eq(ex[i], n) {
+			t.Fail()
+		}
 	}
 }
