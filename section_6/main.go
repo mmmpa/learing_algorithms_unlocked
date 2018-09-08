@@ -127,10 +127,15 @@ func trace(x []rune, y []rune, xi, yi int, actions [][][]string, result [][]stri
 }
 
 func pattern(a string, pat string) []int {
+	results := []int{}
+
+	if len(a) < len(pat) {
+		return results
+	}
+
 	text := []rune(a)
 	table, chars := nextStateTable(pat)
 	pl := len(pat)
-	results := []int{}
 
 	state := 0
 	for i, char := range text {
