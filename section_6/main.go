@@ -117,11 +117,78 @@ func trace(x []rune, y []rune, xi, yi int, actions [][][]string, result [][]stri
 	switch {
 	case action[0] == END:
 		return result
-	case action[0] == COP, action[0] == REP :
+	case action[0] == COP, action[0] == REP:
 		return trace(x, y, xi-1, yi-1, actions, append([][]string{action}, result...))
 	case action[0] == DEL:
 		return trace(x, y, xi, yi-1, actions, append([][]string{action}, result...))
 	default:
 		return trace(x, y, xi, yi-1, actions, append([][]string{action}, result...))
 	}
+}
+
+func pattern(a string, pat string) []int {
+	text := []rune(a)
+	table, chars := nextStateTable(pat)
+	pl := len(pat)
+	results := []int{}
+
+	state := 0
+	for i, char := range text {
+		if !chars[string(char)] {
+			state = 0
+			continue
+		}
+
+		nextState := table[state][string(char)]
+		if nextState == pl {
+			results = append(results, i-state)
+			state = 0
+		} else {
+			state = nextState
+		}
+	}
+
+	return results
+}
+
+func nextState(expected string, actual string) int {
+	ex := []rune(expected)
+	ac := []rune(actual)
+	acl := len(ac)
+
+	l := acl
+
+	for l > 0 {
+		if string(ex[0:l]) == string(ac[acl-l:]) {
+			return l
+		}
+		l--
+	}
+
+	return l
+}
+
+func nextStateTable(a string) ([]map[string]int, map[string]bool) {
+	xs := []rune(a)
+	chars := map[string]bool{}
+	table := make([]map[string]int, len(xs))
+
+	for _, x := range xs {
+		chars[string(x)] = true
+	}
+	for i, _ := range table {
+		table[i] = map[string]int{}
+	}
+
+	for i, _ := range table {
+		table[i] = map[string]int{}
+		ac := string(xs[0:i])
+
+		for k, _ := range chars {
+			next := nextState(a, fmt.Sprintf("%s%v", ac, k))
+			table[i][string(k)] = next
+		}
+	}
+
+	return table, chars
 }
