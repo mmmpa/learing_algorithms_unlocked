@@ -6,86 +6,134 @@ import (
 )
 
 func TestCompute(t *testing.T) {
-	shift := uint8(128)
-	raw := "ABCDE XYZ あいうえお"
-	encrypted := shiftEncrypt("ABCDE XYZ あいうえお", shift)
-
-	if encrypted == raw {
-		t.Fail()
-		return
+	rows := []struct {
+		a  string
+		b  string
+		ex string
+	}{
+		{
+			"GTACCGTCA",
+			"CATCGA",
+			"TCGA",
+		},
 	}
 
-	decrypted := shiftDecrypt(encrypted, shift)
+	for _, row := range rows {
+		ac := lcs(row.a, row.b)
 
-	fmt.Println(encrypted)
-	fmt.Println(decrypted)
-
-	if decrypted != raw {
-		t.Fail()
-		return
+		if ac != row.ex {
+			fmt.Printf("%+v \n", ac)
+			t.Fail()
+		}
 	}
 }
 
 func TestCompute2(t *testing.T) {
-	encryptor, decryptor := genTable()
-
-	raw := "ABCDE XYZ あいうえお"
-	encrypted := tableEncrypt("ABCDE XYZ あいうえお", encryptor)
-
-	if encrypted == raw {
-		t.Fail()
-		return
+	rows := []struct {
+		a  string
+		b  string
+		ex [][]string
+	}{
+		{
+			"ACAAGC",
+			"CCGT",
+			[][]string{{DEL, "A"}, {COP, "C"}, {DEL, "A"}, {REP, "A C"}, {COP, "G"}, {REP, "C T"}},
+		},
 	}
 
-	decrypted := tableEncrypt(encrypted, decryptor)
+	for _, row := range rows {
+		ac := replace(row.a, row.b)
 
-	fmt.Println(encrypted)
-	fmt.Println(decrypted)
-
-	if decrypted != raw {
-		t.Fail()
-		return
+		for i, _ := range ac {
+			if row.ex[i][0] != ac[i][0] || row.ex[i][1] != ac[i][1] {
+				fmt.Printf("%+v %+v \n", row.ex[i], ac[i])
+				t.Fail()
+			}
+		}
 	}
 }
 
 func TestCompute3(t *testing.T) {
-	raw := "ABCDE XYZ あいうえお"
-	encrypted, pad := onetimeEncrypt("ABCDE XYZ あいうえお")
-
-	if encrypted == raw {
-		t.Fail()
-		return
+	rows := []struct {
+		a  string
+		b  string
+		ex []int
+	}{
+		{
+			"GTAACAGTAAACG",
+			"AAC",
+			[]int{2, 9},
+		},
 	}
 
-	decrypted := onetimeDecrypt(encrypted, pad)
+	for _, row := range rows {
+		ac := pattern(row.a, row.b)
 
-	fmt.Println(encrypted)
-	fmt.Println(pad)
-	fmt.Println(decrypted)
+		if len(ac) == 0 {
+			t.Fail()
+		}
 
-	if decrypted != raw {
-		t.Fail()
-		return
+		for i, _ := range ac {
+			if row.ex[i] != ac[i] {
+				fmt.Printf("%+v %+v \n", row.ex[i], ac[i])
+				t.Fail()
+			}
+		}
 	}
 }
 
 func TestCompute4(t *testing.T) {
-	raw := "ABCDE XYZ あいうえお"
-	encrypted, pad := onetimeBlockEncrypt("ABCDE XYZ あいうえお", 2)
-
-	if encrypted == raw {
-		t.Fail()
-		return
+	rows := []struct {
+		a  string
+		ex []map[string]int
+	}{
+		{
+			"ACACAGA",
+			[]map[string]int{
+				{"A": 1, "C": 0, "G": 0},
+				{"A": 1, "C": 2, "G": 0},
+				{"A": 3, "C": 0, "G": 0},
+				{"A": 1, "C": 4, "G": 0},
+				{"A": 5, "C": 0, "G": 0},
+				{"A": 1, "C": 4, "G": 6},
+				{"A": 7, "C": 0, "G": 0},
+				{"A": 1, "C": 2, "G": 0},
+			},
+		},
 	}
 
-	decrypted := onetimeBlockDecrypt(encrypted, pad)
+	for _, row := range rows {
+		ac, m := nextStateTable(row.a)
 
-	fmt.Println(encrypted)
-	fmt.Println(pad)
-	fmt.Println(decrypted)
+		for i, _ := range ac {
+			for k, _ := range m {
+				if ac[i][k] != row.ex[i][k] {
+					fmt.Printf("%+v %+v \n", ac[i][k], row.ex[i][k])
+					t.Fail()
+				}
+			}
+		}
+	}
+}
 
-	if decrypted != raw {
-		t.Fail()
-		return
+func TestCompute5(t *testing.T) {
+	rows := []struct {
+		a  string
+		b  string
+		ex int
+	}{
+		{"ACA", "ACG", 0},
+		{"ACA", "A", 1},
+		{"ACACGAA", "ACACA", 3},
+		{"ACACGAA", "ACACG", 5},
+		{"ACACGAA", "ACACGT", 0},
+	}
+
+	for _, row := range rows {
+		ac := nextState(row.a, row.b)
+		if ac != row.ex {
+			fmt.Printf("%+v %+v \n", ac, row.ex)
+			t.Fail()
+		}
 	}
 }
