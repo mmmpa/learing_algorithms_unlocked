@@ -5,13 +5,68 @@ import (
 	"github.com/k0kubun/pp"
 )
 
-func huffman(a string) string {
-	buildHuffman(a)
+func huffman(a string) ([]byte, *HuffmanNode, uint8) {
+	tree, byteMap := buildHuffman(a)
 
-	return ""
+	bytes := []byte(a)
+
+	c := []byte{}
+	s := uint8(0)
+	p := uint8(8)
+	for _, b := range bytes {
+		v := byteMap[b]
+
+		for i := 0; i < int(v.Length); i++ {
+			p--
+			b := (v.Code >> uint8(i)) & 1
+			s += uint8(b << p)
+
+			if p == 0 {
+				c = append(c, s)
+				p = uint8(8)
+				s = uint8(0)
+			}
+		}
+	}
+
+	if p != 0 {
+		c = append(c, s)
+	}
+
+	return c, tree, p
 }
 
-func buildHuffman(a string) *HuffmanNode {
+func deHuffman(bytes []byte, tree *HuffmanNode, rest uint8) string {
+	result := ""
+
+	now := tree
+	l := len(bytes) - 1
+	for ii, by := range bytes {
+		top := 0
+		if ii == l {
+			top = int(rest)
+		}
+
+		for i := 7; i >= top; i-- {
+			b := (by >> uint8(i)) & 1
+
+			if b == 0 {
+				now = now.Zero
+			} else {
+				now = now.One
+			}
+
+			if now.Leaf() {
+				result += string(now.Byte)
+				now = tree
+			}
+		}
+	}
+
+	return result
+}
+
+func buildHuffman(a string) (*HuffmanNode, map[byte]MapBody) {
 	bytes := []byte(a)
 	counts := map[uint8]int{}
 
@@ -58,13 +113,13 @@ func buildHuffman(a string) *HuffmanNode {
 	hmap := buildHuffmanMap(root, 0, 0, map[byte]MapBody{})
 
 	for k, v := range hmap {
-		fmt.Printf(fmt.Sprintf("%%v %%0%db\n", v.Length), string(k), v.Code)
+		fmt.Printf("%v %b\n", string(k), v.Code)
 	}
 
-	return root
+	return root, hmap
 }
 
-func buildHuffmanMap(node *HuffmanNode, pre int, length int, m map[byte]MapBody) map[byte]MapBody {
+func buildHuffmanMap(node *HuffmanNode, pre int, length uint, m map[byte]MapBody) map[byte]MapBody {
 	if node == nil {
 		return m
 	}
@@ -77,15 +132,15 @@ func buildHuffmanMap(node *HuffmanNode, pre int, length int, m map[byte]MapBody)
 		return m
 	}
 
-	buildHuffmanMap(node.Zero, pre<<1, length+1, m)
-	buildHuffmanMap(node.One, (pre<<1)+1, length+1, m)
+	buildHuffmanMap(node.Zero, pre, length+1, m)
+	buildHuffmanMap(node.One, pre+(1<<length), length+1, m)
 
 	return m
 }
 
 type MapBody struct {
 	Code   int
-	Length int
+	Length uint
 }
 
 type HuffmanNode struct {
