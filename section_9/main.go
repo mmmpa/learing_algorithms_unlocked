@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/k0kubun/pp"
+	"math"
 )
 
 func huffman(a string) ([]byte, *HuffmanNode, uint8) {
@@ -10,7 +10,7 @@ func huffman(a string) ([]byte, *HuffmanNode, uint8) {
 
 	bytes := []byte(a)
 
-	c := []byte{}
+	c := make([]byte, 0, 100)
 	s := uint8(0)
 	p := uint8(8)
 	for _, b := range bytes {
@@ -37,7 +37,7 @@ func huffman(a string) ([]byte, *HuffmanNode, uint8) {
 }
 
 func deHuffman(bytes []byte, tree *HuffmanNode, rest uint8) string {
-	result := ""
+	result := make([]byte, 0, 100)
 
 	now := tree
 	l := len(bytes) - 1
@@ -57,13 +57,13 @@ func deHuffman(bytes []byte, tree *HuffmanNode, rest uint8) string {
 			}
 
 			if now.Leaf() {
-				result += string(now.Byte)
+				result = append(result, now.Byte)
 				now = tree
 			}
 		}
 	}
 
-	return result
+	return string(result)
 }
 
 func buildHuffman(a string) (*HuffmanNode, map[byte]MapBody) {
@@ -109,12 +109,7 @@ func buildHuffman(a string) (*HuffmanNode, map[byte]MapBody) {
 		})
 	}
 
-	pp.Println(root)
 	hmap := buildHuffmanMap(root, 0, 0, map[byte]MapBody{})
-
-	for k, v := range hmap {
-		fmt.Printf("%v %b\n", string(k), v.Code)
-	}
 
 	return root, hmap
 }
@@ -230,4 +225,85 @@ func (o *Heap) Pick() (HeapItem, error) {
 	}
 
 	return re, nil
+}
+
+func uintPointer(n uint32) *uint32 {
+	return &n
+}
+
+func initialMap() (map[string]*uint32, []string) {
+	m := map[string]*uint32{}
+	m2 := make([]string, math.MaxUint16)
+	for i := uint32(0); i < math.MaxUint8; i++ {
+		m[string(byte(i))] = uintPointer(i)
+		m2[i] = string(byte(i))
+	}
+
+	return m, m2
+}
+
+func lzw(a string) []uint32 {
+	m, _ := initialMap()
+	bytes := []byte(a)
+	result := make([]uint32, 0, 100)
+
+	initial := uint32(math.MaxUint8)
+
+	pre := string(bytes[0])
+	for i := 1; i < len(bytes); i++ {
+		now := string(bytes[i])
+
+		if m[pre+now] == nil {
+			result = append(result, *m[pre])
+			initial++
+			m[pre+now] = uintPointer(initial)
+			pre = now
+		} else {
+			pre = pre + now
+		}
+	}
+	result = append(result, *m[pre])
+
+	return result
+}
+
+func delzw(bytes []uint32) string {
+	s, m := initialMap()
+
+	initial := uint32(math.MaxUint8)
+
+	result := m[bytes[0]]
+	pre := m[bytes[0]]
+	nowHead := ""
+	for i := 1; i < len(bytes); i++ {
+		now := m[bytes[i]]
+
+		if now == "" {
+			built := m[bytes[i-1]] + head(m[bytes[i-1]])
+			result += built
+			now = built
+		} else {
+			result += now
+		}
+
+		nowHead = head(now)
+		if s[pre+nowHead] == nil {
+			initial++
+			s[pre+nowHead] = uintPointer(initial)
+			m[initial] = pre + nowHead
+			pre = now
+		} else {
+			pre = pre + now
+		}
+	}
+
+	return result
+}
+
+func head(s string) string {
+	if s == "" {
+		return s
+	}
+
+	return string([]byte(s)[0])
 }
